@@ -86,8 +86,8 @@ Content-Type: application/json
   "customerId": 1,
   "storeId": 1,
   "products": {
-    "1" : 0,
-    "2" : 0
+    "1" : 5,
+    "2" : 10
   }
 }
 ```
