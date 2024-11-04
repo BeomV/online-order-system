@@ -18,3 +18,80 @@
 
 ### 주문(Order)
 - 고객은 상품을 주문 할 수 있다.
+
+
+
+***
+
+
+
+
+## Building
+
+프로젝트 빌드
+```
+./gradlew build 
+```
+도커이미지 빌드
+```
+docker build -t <Images Name> .
+```
+DockerFile
+```DockerFile
+FROM openjdk:17-jdk-slim
+
+WORKDIR /app
+
+COPY build/libs/online-order-system-0.0.1-SNAPSHOT.jar app.jar
+
+CMD ["java", "-jar", "app.jar"]
+```
+Docker network 생성 후 Mysql 빌드
+```
+docker run -d --name mysql-container --network <network name> -p 3306:3306 -e MYSQL_ROOT_PASS=root mysql:8.0.31
+```
+Mysql 같은 네트워크 안에 프로젝트 빌드
+```
+docker run -d --name spring-container -p 8080:8080 --network <network name> <Iamges Name> <Tag>
+```
+
+***
+1. Create Customer
+   
+POST http://localhost:8080/api/v1/customers?name=user&address=Suwon&phoneNumber=010-1111-1111
+```JSON
+{
+  "statusCode": "OK",
+  "message": "SUCCESS",
+  "data": {
+    "name": "user",
+    "address": "Suwon",
+    "phoneNumber": "010-1111-1111"
+  }
+}
+```
+2. Order Product
+   
+POST http://localhost:8080/api/v1/orders
+```
+Content-Type: application/json
+{
+  "customerId": 1,
+  "storeId": 1,
+  "products": {
+    "1" : 0,
+    "2" : 0
+  }
+}
+```
+
+```JSON
+{
+  "statusCode": "OK",
+  "message": "SUCCESS",
+  "data": null
+}
+```
+
+
+
