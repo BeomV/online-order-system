@@ -10,15 +10,12 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Orderitem {
 
     @Id
+    @Column("order_item_id")
     private int orderItemId;
-
-    @Column
     private int productId;
 
-    @Column
+    @Column(value = "order_id")
     private int orderId;
-
-    @Column
     private int orderQuantity;
 
     public Orderitem(int productId, int orderQuantity){

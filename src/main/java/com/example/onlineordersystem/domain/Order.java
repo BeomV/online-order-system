@@ -8,9 +8,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Table(name ="orders")
@@ -25,17 +23,17 @@ public class Order {
     @Column
     private Timestamp orderAt;
 
-    @MappedCollection(idColumn = "order_item_id", keyColumn = "order_id")
-    private List<Orderitem> orderitems = new ArrayList<>();
+    @MappedCollection(idColumn = "order_id", keyColumn = "order_item_id")
+    private Set<Orderitem> orderItems = new HashSet<>();
 
-    public Order(int customerId, List<Orderitem> orderitems){
+    public Order(int customerId, Set<Orderitem> orderItems){
         this.customerId = customerId;
         this.orderAt = Timestamp.valueOf(LocalDateTime.now());
-        this.orderitems = orderitems;
+        this.orderItems = orderItems;
     }
 
     public static Order newOrder(CreateOrder createOrder){
-        List<Orderitem> items = new ArrayList<>();
+        Set<Orderitem> items = new HashSet<>();
 
         for (Map.Entry<Integer, Integer> entry : createOrder.getQuantityByProduct().entrySet()){
             items.add(new Orderitem(entry.getKey(), entry.getValue()));
