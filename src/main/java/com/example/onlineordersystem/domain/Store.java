@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 @Table(name = "stores")
 public class Store {
     @Id
-    private String storeId;
+    private int storeId;
 
     @Column
     private String name;
@@ -22,9 +22,8 @@ public class Store {
     private String phoneNumber;
 
     @Column
-    private ZonedDateTime openAt;
+    private String openAt; // 09:00
 
     @Column
-    private ZonedDateTime closeAt;
-
+    private String closeAt; // 18:00
 }
