@@ -23,6 +23,13 @@
 
 ***
 
+기술 스택
++ Spring Boot
++ Lombok
++ Docker
++ Mysql
+
+***
 
 
 
