@@ -1,72 +1,80 @@
-## 요구사항 기획 및 설계
-- 사용자는 특정 매장으로부터 상품 주문이 가능함
-- 품절 상태면 주문이 불가능하여야함
+# online-order-system
 
-## 기능 설계
+매장 기반 온라인 상품 주문 시스템 REST API입니다.
+고객 등록, 상품/매장 관리, 주문 처리 및 재고 검증 기능을 제공합니다.
 
-### 고객(User)
-- 회원가입을 통해 주문을 할 수 있다.
-- 회원은 이름, 주소, 전화번호가 등록이 되어야 한다.
+## 기술 스택
 
-### 상품(Product)
-- 상품을 등록, 삭제, 수정을 할 수 있다.
-- 재고 관리를 할 수 있다.
+| 구분 | 기술 | 버전 |
+|------|------|------|
+| **Language** | Java | 17 |
+| **Framework** | Spring Boot | 3.3.1 |
+| **Data Access** | Spring Data JDBC | - |
+| **Database** | MySQL | 8.0.31 |
+| **Template** | Thymeleaf | - |
+| **Build** | Gradle | - |
+| **Infra** | Docker | - |
+| **기타** | Lombok | - |
 
-### 매장(Store)
-- 매장 이름,전화번호,영업시간이 저장 되어야 한다.
-- 매장에서 주문을 수락 할 수 있다.
+## 주요 기능
 
-### 주문(Order)
-- 고객은 상품을 주문 할 수 있다.
+### 고객 (Customer)
+- 회원가입 (이름, 주소, 전화번호)
 
+### 상품 (Product)
+- 상품 등록, 수정, 삭제
+- 매장별 재고 관리
 
+### 매장 (Store)
+- 매장 정보 관리 (이름, 전화번호, 영업시간)
+- 주문 수락
 
-***
+### 주문 (Order)
+- 고객이 특정 매장에서 상품 주문
+- **재고 검증**: 품절 상태 시 주문 불가 처리
+- 주문 시 재고 자동 차감
 
-기술 스택
-+ Spring Boot
-+ Lombok
-+ Docker
-+ Mysql
+## 프로젝트 구조
 
-***
-
-
-
-## Building
-
-프로젝트 빌드
 ```
-./gradlew build 
+src/main/java/com/example/onlineordersystem/
+├── controller/
+│   ├── CustomerController.java       # 고객 API
+│   ├── OrderController.java          # 주문 API
+│   ├── GlobalExceptionHandler.java   # 전역 예외 처리
+│   ├── NewOrderRequest.java          # 주문 요청 DTO
+│   └── Response.java                 # 공통 응답 래퍼
+├── domain/
+│   ├── Customer.java                 # 고객 엔티티
+│   ├── Product.java                  # 상품 엔티티
+│   ├── Store.java                    # 매장 엔티티
+│   ├── StoreProduct.java             # 매장-상품 재고 엔티티
+│   ├── Order.java                    # 주문 엔티티 (@MappedCollection)
+│   └── Orderitem.java               # 주문 항목 엔티티
+├── repository/
+│   ├── CustomerRepository.java       # CrudRepository
+│   ├── OrderRepository.java          # CrudRepository
+│   └── StoreProductRepository.java   # 재고 조회 쿼리
+└── service/
+    ├── CustomerService.java          # 고객 비즈니스 로직
+    ├── OrderService.java             # 주문 + 재고 검증 로직
+    └── StoreService.java             # 매장 상품 관리
 ```
-도커이미지 빌드
-```
-docker build -t <Images Name> .
-```
-DockerFile
-```DockerFile
-FROM openjdk:17-jdk-slim
 
-WORKDIR /app
+## API 명세
 
-COPY build/libs/online-order-system-0.0.1-SNAPSHOT.jar app.jar
+### Customer API
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | `/api/v1/customers` | 고객 등록 |
 
-CMD ["java", "-jar", "app.jar"]
+**요청 예시**
 ```
-Docker network 생성 후 Mysql 빌드
-```
-docker run -d --name mysql-container --network <network name> -p 3306:3306 -e MYSQL_ROOT_PASS=root mysql:8.0.31
-```
-Mysql 같은 네트워크 안에 프로젝트 빌드
-```
-docker run -d --name spring-container -p 8080:8080 --network <network name> <Iamges Name> <Tag>
+POST /api/v1/customers?name=user&address=Suwon&phoneNumber=010-1111-1111
 ```
 
-***
-1. Create Customer
-   
-POST http://localhost:8080/api/v1/customers?name=user&address=Suwon&phoneNumber=010-1111-1111
-```JSON
+**응답**
+```json
 {
   "statusCode": "OK",
   "message": "SUCCESS",
@@ -77,28 +85,69 @@ POST http://localhost:8080/api/v1/customers?name=user&address=Suwon&phoneNumber=
   }
 }
 ```
-2. Order Product
-   
-POST http://localhost:8080/api/v1/orders
-```
-Content-Type: application/json
+
+### Order API
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | `/api/v1/orders` | 상품 주문 |
+
+**요청 예시**
+```json
 {
   "customerId": 1,
   "storeId": 1,
   "products": {
-    "1" : 0,
-    "2" : 0
+    "1": 2,
+    "2": 1
   }
 }
 ```
 
-```JSON
-{
-  "statusCode": "OK",
-  "message": "SUCCESS",
-  "data": null
-}
+## 아키텍처 특징
+
+- **Spring Data JDBC**: JPA 대신 경량 ORM 사용, `@MappedCollection`으로 Aggregate Root 패턴 적용
+- **Command Object 패턴**: `CreateCustomer`, `CreateOrder`로 Controller-Domain 계층 분리
+- **공통 응답 래퍼**: `Response<T>` 클래스로 `success()` / `fail()` 표준 응답 형식
+- **재고 검증**: OrderService + StoreProduct 이중 검증 (Defense in Depth)
+- **SQL 초기화**: `schema.sql` + `data.sql`로 테이블 생성 및 샘플 데이터 자동 로드
+
+## 시작하기
+
+### Docker로 실행
+
+```bash
+# 1. 프로젝트 빌드
+./gradlew build
+
+# 2. Docker 이미지 빌드
+docker build -t online-order-system .
+
+# 3. Docker 네트워크 생성
+docker network create order-network
+
+# 4. MySQL 실행
+docker run -d --name mysql-container --network order-network \
+  -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root mysql:8.0.31
+
+# 5. 애플리케이션 실행
+docker run -d --name spring-container --network order-network \
+  -p 8080:8080 online-order-system
 ```
 
+### 로컬 실행
 
+```bash
+# MySQL 로컬 실행 후
+./gradlew bootRun
+```
 
+접속: `http://localhost:8080`
+
+## Dockerfile
+
+```dockerfile
+FROM openjdk:17-jdk-slim
+WORKDIR /app
+COPY build/libs/online-order-system-0.0.1-SNAPSHOT.jar app.jar
+CMD ["java", "-jar", "app.jar"]
+```
